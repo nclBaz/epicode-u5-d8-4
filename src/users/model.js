@@ -10,6 +10,7 @@ const UsersSchema = new Schema(
     email: { type: String, required: true },
     password: { type: String, required: true },
     role: { type: String, required: true, enum: ["Admin", "User"], default: "User" },
+    refreshToken: { type: String },
   },
   { timestamps: true }
 )
@@ -38,6 +39,7 @@ UsersSchema.methods.toJSON = function () {
   delete currentUser.createdAt
   delete currentUser.updatedAt
   delete currentUser.__v
+  delete currentUser.refreshToken
   return currentUser
 }
 
