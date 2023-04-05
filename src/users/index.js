@@ -1,7 +1,7 @@
 import express from "express"
 import createError from "http-errors"
 import UsersModel from "./model.js"
-import { basicAuthMiddleware } from "../lib/auth/basic.js"
+import { JWTAuthMiddleware } from "../lib/auth/jwt.js"
 import { adminOnlyMiddleware } from "../lib/auth/admin.js"
 import { createAccessToken } from "../lib/auth/tools.js"
 
@@ -17,7 +17,7 @@ usersRouter.post("/", async (req, res, next) => {
   }
 })
 
-usersRouter.get("/", basicAuthMiddleware, adminOnlyMiddleware, async (req, res, next) => {
+usersRouter.get("/", JWTAuthMiddleware, adminOnlyMiddleware, async (req, res, next) => {
   try {
     const users = await UsersModel.find({})
     res.send(users)
@@ -26,15 +26,16 @@ usersRouter.get("/", basicAuthMiddleware, adminOnlyMiddleware, async (req, res, 
   }
 })
 
-usersRouter.get("/me", basicAuthMiddleware, async (req, res, next) => {
+usersRouter.get("/me", JWTAuthMiddleware, async (req, res, next) => {
   try {
-    res.send(req.user)
+    const user = await UsersModel.findById(req.user._id)
+    res.send(user)
   } catch (error) {
     next(error)
   }
 })
 
-usersRouter.put("/me", basicAuthMiddleware, async (req, res, next) => {
+usersRouter.put("/me", JWTAuthMiddleware, async (req, res, next) => {
   try {
     const updatedUser = await UsersModel.findByIdAndUpdate(req.user._id, req.body, { new: true, runValidators: true })
     res.send(updatedUser)
@@ -43,7 +44,7 @@ usersRouter.put("/me", basicAuthMiddleware, async (req, res, next) => {
   }
 })
 
-usersRouter.delete("/me", basicAuthMiddleware, async (req, res, next) => {
+usersRouter.delete("/me", JWTAuthMiddleware, async (req, res, next) => {
   try {
     await UsersModel.findOneAndDelete(req.user._id)
     res.status(204).send()
@@ -52,7 +53,7 @@ usersRouter.delete("/me", basicAuthMiddleware, async (req, res, next) => {
   }
 })
 
-usersRouter.get("/:id", basicAuthMiddleware, async (req, res, next) => {
+usersRouter.get("/:id", JWTAuthMiddleware, async (req, res, next) => {
   try {
     const user = await UsersModel.findById(req.params.id)
     if (user) {
@@ -65,7 +66,7 @@ usersRouter.get("/:id", basicAuthMiddleware, async (req, res, next) => {
   }
 })
 
-usersRouter.put("/:id", basicAuthMiddleware, adminOnlyMiddleware, async (req, res, next) => {
+usersRouter.put("/:id", JWTAuthMiddleware, adminOnlyMiddleware, async (req, res, next) => {
   try {
     const updatedResource = await UsersModel.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true })
     if (updatedResource) {
@@ -78,7 +79,7 @@ usersRouter.put("/:id", basicAuthMiddleware, adminOnlyMiddleware, async (req, re
   }
 })
 
-usersRouter.delete("/:id", basicAuthMiddleware, adminOnlyMiddleware, async (req, res, next) => {
+usersRouter.delete("/:id", JWTAuthMiddleware, adminOnlyMiddleware, async (req, res, next) => {
   try {
     const deletedResource = await UsersModel.findByIdAndDelete(req.params.id)
     if (deletedResource) {
